@@ -1,47 +1,43 @@
-import { createStore } from "vuex"
+import axios from "axios"
+import router from "../router"
 
-export default createStore({
-    state: {
-        token: localStorage.getItem('token') || '',
-        user:{},
+export default ({
+    namespaced: true,
+    state:{
+        authenticated:false,
+        user:{}
     },
-
+    getters:{
+        authenticated(state){
+            return state.authenticated
+        },
+        user(state){
+            return state.user
+        }
+    },
     mutations:{
-        SET_TOKEN(state, token){
-            state.token = token;
-            localStorage.setItem('token', token);
+        SET_AUTHENTICATED (state, value) {
+            state.authenticated = value
         },
-        SET_USER(state, user){
-            state.user = user;
-        },
-        RemoveToken(state, token){
-            state.token = '';
-            localStorage.removeItem('token');
+        SET_USER (state, value) {
+            state.user = value
         }
     },
 
     actions:{
-        async login({commit}, credentials)
-        {
-            try{
-                const response = await axios.post('/api/login', credentials);
-                commit('SET_TOKEN', response.data.access_token);
-                commit('SET_USER', response.data.user);
-            } catch(error){
-                console.log(error);
-            }
+        login({commit}){
+            return axios.get('/api/user').then(({data})=>{
+                commit('SET_USER',data)
+                commit('SET_AUTHENTICATED',true)
+                router.push({name:'dashboard'})
+            }).catch(({response:{data}})=>{
+                commit('SET_USER',{})
+                commit('SET_AUTHENTICATED',false)
+            })
         },
         logout({commit}){
-            commit('RemoveToken');
-            commit('SET_USER', {});
-        }
-    },
-    getters:{
-        isAuthenticated(state){
-            return!!state.token;
-        },
-        user(state){
-            return state.user;
+            commit('SET_USER',{})
+            commit('SET_AUTHENTICATED',false)
         }
     }
 })

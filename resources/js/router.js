@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import auth from "./store/auth";
+import store from '@/store'
 
 import Home from './Home.vue'
 import About from './About.vue'
@@ -30,12 +30,11 @@ const routes = [
   },
   {
     path: "/profile",
-    name: "Profile",
     component: Profile,
-    meta: {
-      requiresAuth: true
+        meta: {
+            middleware: "auth"
+        }
     }
-  }
 ];
 
 const router = createRouter({
@@ -44,14 +43,18 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-    if (to.matched.some(record => record.meta.requiresAuth)) {
-        if (!store.getters.isAuthenticated) {
-            next({ name: 'Login' });
-        } else {
-            next();
+    document.title = to.meta.title
+    if (to.meta.middleware == "guest") {
+        if (store.state.auth.authenticated) {
+            next({ name: "dashboard" })
         }
+        next()
     } else {
-        next();
+        if (store.state.auth.authenticated) {
+            next()
+        } else {
+            next({ name: "login" })
+        }
     }
 });
 
